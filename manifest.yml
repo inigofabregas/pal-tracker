@@ -6,3 +6,4 @@ applications:
   - route: pal-tracker-cooker-monster.apps.pikes.pal.pivotal.io
   env:
     WELCOME_MESSAGE: Hello from the review environment
+    MANAGEMENT_SECURITY_ENABLED: false
