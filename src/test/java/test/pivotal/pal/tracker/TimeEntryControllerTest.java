@@ -5,6 +5,8 @@ import io.pivotal.pal.tracker.TimeEntryController;
 import io.pivotal.pal.tracker.TimeEntryRepository;
 import org.junit.Before;
 import org.junit.Test;
+import org.springframework.boot.actuate.metrics.CounterService;
+import org.springframework.boot.actuate.metrics.GaugeService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 
@@ -19,12 +21,17 @@ import static org.mockito.Mockito.*;
 
 public class TimeEntryControllerTest {
     private TimeEntryRepository timeEntryRepository;
+    private CounterService counter;
+    private GaugeService gauge;
+
     private TimeEntryController controller;
 
     @Before
     public void setUp() throws Exception {
         timeEntryRepository = mock(TimeEntryRepository.class);
-        controller = new TimeEntryController(timeEntryRepository);
+        counter = mock(CounterService.class);
+        gauge = mock(GaugeService.class);
+        controller = new TimeEntryController(counter, gauge, timeEntryRepository);
     }
 
     @Test
@@ -35,10 +42,13 @@ public class TimeEntryControllerTest {
             .when(timeEntryRepository)
             .create(any(TimeEntry.class));
 
-
+        doNothing().when(gauge).submit(eq("timeEntries.count"), anyInt());
+        doNothing().when(counter).increment(eq("TimeEntry.created"));
         ResponseEntity response = controller.create(timeEntryToCreate);
 
 
+        verify(counter).increment(eq("TimeEntry.created"));
+        verify(gauge).submit(eq("timeEntries.count"), anyInt());
         verify(timeEntryRepository).create(timeEntryToCreate);
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.CREATED);
         assertThat(response.getBody()).isEqualTo(expectedResult);
@@ -47,12 +57,13 @@ public class TimeEntryControllerTest {
     @Test
     public void testRead() throws Exception {
         TimeEntry expected = new TimeEntry(1L, 123L, 456L, LocalDate.parse("2017-01-08"), 8);
+        doNothing().when(counter).increment(eq("TimeEntry.read"));
         doReturn(expected)
             .when(timeEntryRepository)
             .find(1L);
 
         ResponseEntity<TimeEntry> response = controller.read(1L);
-
+        verify(counter).increment(eq("TimeEntry.read"));
         verify(timeEntryRepository).find(1L);
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
         assertThat(response.getBody()).isEqualTo(expected);
@@ -64,6 +75,7 @@ public class TimeEntryControllerTest {
             .when(timeEntryRepository)
             .find(1L);
 
+        verifyZeroInteractions(counter);
         ResponseEntity<TimeEntry> response = controller.read(1L);
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
     }
@@ -74,10 +86,12 @@ public class TimeEntryControllerTest {
             new TimeEntry(1L, 123L, 456L, LocalDate.parse("2017-01-08"), 8),
             new TimeEntry(2L, 789L, 321L, LocalDate.parse("2017-01-07"), 4)
         );
+        doNothing().when(counter).increment(eq("TimeEntry.listed"));
         doReturn(expected).when(timeEntryRepository).list();
 
         ResponseEntity<List<TimeEntry>> response = controller.list();
 
+        verify(counter).increment(eq("TimeEntry.listed"));
         verify(timeEntryRepository).list();
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
         assertThat(response.getBody()).isEqualTo(expected);
@@ -86,6 +100,7 @@ public class TimeEntryControllerTest {
     @Test
     public void testUpdate() throws Exception {
         TimeEntry expected = new TimeEntry(1L, 987L, 654L, LocalDate.parse("2017-01-07"), 4);
+        doNothing().when(counter).increment(eq("TimeEntry.updated"));
         doReturn(expected)
             .when(timeEntryRepository)
             .update(eq(1L), any(TimeEntry.class));
@@ -93,6 +108,7 @@ public class TimeEntryControllerTest {
         ResponseEntity response = controller.update(1L, expected);
 
         verify(timeEntryRepository).update(1L, expected);
+        verify(counter).increment(eq("TimeEntry.updated"));
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
         assertThat(response.getBody()).isEqualTo(expected);
     }
@@ -103,6 +119,7 @@ public class TimeEntryControllerTest {
             .when(timeEntryRepository)
             .update(eq(1L), any(TimeEntry.class));
 
+        verifyZeroInteractions(counter);
         ResponseEntity response = controller.update(1L, new TimeEntry());
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
     }
@@ -110,7 +127,11 @@ public class TimeEntryControllerTest {
     @Test
     public void testDelete() throws Exception {
         ResponseEntity<TimeEntry> response = controller.delete(1l);
+        doNothing().when(gauge).submit(eq("timeEntries.count"), anyInt());
+        doNothing().when(counter).increment(eq("TimeEntry.deleted"));
         verify(timeEntryRepository).delete(1L);
+        verify(counter).increment(eq("TimeEntry.deleted"));
+        verify(gauge).submit(eq("timeEntries.count"), anyInt());
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.NO_CONTENT);
     }
 }
