@@ -14,10 +14,10 @@ import javax.sql.DataSource;
 @SpringBootApplication
 public class PalTrackerApplication {
 
-    /*@Bean
+    @Bean
     TimeEntryRepository getFromStorage(DataSource dataSource) {
         return new JdbcTimeEntryRepository(dataSource);
-    }*/
+    }
 
     @Bean
     public ObjectMapper jsonObjectMapper() {
