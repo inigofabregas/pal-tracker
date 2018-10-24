@@ -1,5 +1,6 @@
 package io.pivotal.pal.tracker;
 
+import java.sql.Date;
 import java.time.LocalDate;
 import java.util.Map;
 import java.util.Objects;
@@ -23,9 +24,10 @@ public class TimeEntry {
     }
 
     public TimeEntry(Map<String, Object> timeEntryMap) {
+        this.id = (long)timeEntryMap.get("id");
         this.projectId = (long)timeEntryMap.get("project_id");
         this.userId = (long)timeEntryMap.get("user_id");
-        this.date = (LocalDate)timeEntryMap.get("date");
+        this.date = ((Date)timeEntryMap.get("date")).toLocalDate();
         this.hours = (int)timeEntryMap.get("hours");
     }
 

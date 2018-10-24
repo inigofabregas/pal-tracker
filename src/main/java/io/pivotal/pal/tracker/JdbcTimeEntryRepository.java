@@ -50,9 +50,14 @@ public class JdbcTimeEntryRepository implements TimeEntryRepository {
     }
 
     @Override
-    public TimeEntry find(long l) {
+    public TimeEntry find(long id) {
+        try {
+            Map<String, Object> mapTimeEntry = jdbcTemplate.queryForMap("Select * from time_entries where id = ?", id);
 
-        return new TimeEntry(jdbcTemplate.queryForMap("Select * from time_entries where id = ?", l));
+            return new TimeEntry(mapTimeEntry);
+        }catch(Exception e) {
+            return null;
+        }
     }
 
     @Override
