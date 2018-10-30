@@ -7,4 +7,4 @@ applications:
   env:
     WELCOME_MESSAGE: Hello from the review environment
     MANAGEMENT_SECURITY_ENABLED: false
-    HTTPS_DISABLED: dissabled
+    HTTPS_DISABLED: disabled
